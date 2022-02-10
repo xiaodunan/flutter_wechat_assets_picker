@@ -207,6 +207,9 @@ abstract class AssetPickerBuilderDelegate<Asset, Path> {
 
   AssetPickerTextDelegate get textDelegate => Singleton.textDelegate;
 
+  AssetPickerTextDelegate get semanticsTextDelegate =>
+      Singleton.textDelegate.semanticsTextDelegate;
+
   /// Keep a `initState` method to sync with [State].
   /// 保留一个 `initState` 方法与 [State] 同步。
   @mustCallSuper
@@ -392,6 +395,7 @@ abstract class AssetPickerBuilderDelegate<Asset, Path> {
               fontSize: 13,
               fontWeight: FontWeight.w500,
             ),
+            semanticsLabel: semanticsTextDelegate.gifIndicator,
             strutStyle: const StrutStyle(forceStrutHeight: true, height: 1),
           ),
         ),
@@ -428,6 +432,7 @@ abstract class AssetPickerBuilderDelegate<Asset, Path> {
             return ScaleText(
               textDelegate.emptyList,
               maxScaleFactor: 1.5,
+              semanticsLabel: semanticsTextDelegate.emptyList,
             );
           }
           return w!;
@@ -448,6 +453,7 @@ abstract class AssetPickerBuilderDelegate<Asset, Path> {
         textDelegate.loadFailed,
         textAlign: TextAlign.center,
         style: const TextStyle(fontSize: 18),
+        semanticsLabel: semanticsTextDelegate.loadFailed,
       ),
     );
   }
@@ -494,6 +500,7 @@ abstract class AssetPickerBuilderDelegate<Asset, Path> {
                 style: context.themeData.textTheme.caption?.copyWith(
                   fontSize: 14,
                 ),
+                semanticsLabel: semanticsTextDelegate.accessAllTip,
               ),
             ),
             Icon(
@@ -578,12 +585,14 @@ abstract class AssetPickerBuilderDelegate<Asset, Path> {
             textDelegate.unableToAccessAll,
             style: const TextStyle(fontSize: 22),
             textAlign: TextAlign.center,
+            semanticsLabel: semanticsTextDelegate.unableToAccessAll,
           ),
           SizedBox(height: size.height / 30),
           ScaleText(
             textDelegate.accessAllTip,
             style: const TextStyle(fontSize: 18),
             textAlign: TextAlign.center,
+            semanticsLabel: semanticsTextDelegate.accessAllTip,
           ),
         ],
       ),
@@ -601,6 +610,7 @@ abstract class AssetPickerBuilderDelegate<Asset, Path> {
       child: ScaleText(
         textDelegate.goToSystemSettings,
         style: const TextStyle(fontSize: 17),
+        semanticsLabel: semanticsTextDelegate.goToSystemSettings,
       ),
       onPressed: PhotoManager.openSetting,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -611,6 +621,7 @@ abstract class AssetPickerBuilderDelegate<Asset, Path> {
       child: ScaleText(
         textDelegate.accessLimitedAssets,
         style: TextStyle(color: interactiveTextColor(context)),
+        semanticsLabel: semanticsTextDelegate.accessLimitedAssets,
       ),
     );
 
@@ -917,7 +928,7 @@ class DefaultAssetPickerBuilderDelegate
       backgroundColor: theme.appBarTheme.backgroundColor,
       centerTitle: isAppleOS,
       title: Semantics(
-        onTapHint: textDelegate.sActionSwitchPathLabel,
+        onTapHint: semanticsTextDelegate.sActionSwitchPathLabel,
         child: pathEntitySelector(context),
       ),
       leading: backButton(context),
@@ -1277,8 +1288,10 @@ class DefaultAssetPickerBuilderDelegate
         final int selectedIndex = p.selectedAssets.indexOf(asset) + 1;
         String hint = '';
         if (asset.type == AssetType.audio || asset.type == AssetType.video) {
-          hint += '${textDelegate.sNameDurationLabel}: ';
-          hint += textDelegate.durationIndicatorBuilder(asset.videoDuration);
+          hint += '${semanticsTextDelegate.sNameDurationLabel}: ';
+          hint += semanticsTextDelegate.durationIndicatorBuilder(
+            asset.videoDuration,
+          );
         }
         if (asset.title?.isNotEmpty == true) {
           hint += ', ${asset.title}';
@@ -1288,18 +1301,18 @@ class DefaultAssetPickerBuilderDelegate
           enabled: !isBanned,
           excludeSemantics: true,
           focusable: !isSwitchingPath.value,
-          label: '${textDelegate.semanticTypeLabel(asset.type)}'
+          label: '${semanticsTextDelegate.semanticTypeLabel(asset.type)}'
               '${semanticIndex(index)}, '
               '${asset.createDateTime.toString().replaceAll('.000', '')}',
           hidden: isSwitchingPath.value,
           hint: hint,
           image: asset.type == AssetType.image || asset.type == AssetType.video,
           onTap: () => selectAsset(context, asset, isSelected),
-          onTapHint: textDelegate.sActionSelectHint,
+          onTapHint: semanticsTextDelegate.sActionSelectHint,
           onLongPress: isPreviewEnabled
               ? () => _pushAssetToViewer(context, index, asset)
               : null,
-          onLongPressHint: textDelegate.sActionPreviewHint,
+          onLongPressHint: semanticsTextDelegate.sActionPreviewHint,
           selected: isSelected,
           sortKey: OrdinalSortKey(
             semanticIndex(index).toDouble(),
@@ -1366,9 +1379,6 @@ class DefaultAssetPickerBuilderDelegate
 
   @override
   Widget audioIndicator(BuildContext context, AssetEntity asset) {
-    final String durationText = textDelegate.durationIndicatorBuilder(
-      Duration(seconds: asset.duration),
-    );
     return Container(
       width: double.maxFinite,
       alignment: AlignmentDirectional.bottomStart,
@@ -1383,10 +1393,14 @@ class DefaultAssetPickerBuilderDelegate
       child: Padding(
         padding: const EdgeInsetsDirectional.only(start: 4),
         child: ScaleText(
-          durationText,
-          semanticsLabel: '${textDelegate.sNameDurationLabel}: '
-              '$durationText',
+          textDelegate.durationIndicatorBuilder(
+            Duration(seconds: asset.duration),
+          ),
           style: const TextStyle(fontSize: 16),
+          semanticsLabel: '${semanticsTextDelegate.sNameDurationLabel}: '
+              '${semanticsTextDelegate.durationIndicatorBuilder(
+            Duration(seconds: asset.duration),
+          )}',
         ),
       ),
     );
@@ -1454,6 +1468,10 @@ class DefaultAssetPickerBuilderDelegate
               fontSize: 17,
               fontWeight: FontWeight.normal,
             ),
+            semanticsLabel: p.isSelectedNotEmpty && !isSingleAssetMode
+                ? '${semanticsTextDelegate.confirm}'
+                    ' (${p.selectedAssets.length}/${p.maxAssets})'
+                : semanticsTextDelegate.confirm,
           ),
           onPressed: p.isSelectedNotEmpty
               ? () => Navigator.of(context).maybePop(p.selectedAssets)
@@ -1509,6 +1527,7 @@ class DefaultAssetPickerBuilderDelegate
             return ScaleText(
               textDelegate.emptyList,
               maxScaleFactor: 1.5,
+              semanticsLabel: semanticsTextDelegate.emptyList,
             );
           }
           return PlatformProgressIndicator(
@@ -1587,8 +1606,8 @@ class DefaultAssetPickerBuilderDelegate
             ValueListenableBuilder<PermissionState>(
               valueListenable: permission,
               builder: (_, PermissionState ps, Widget? child) => Semantics(
-                label: '${textDelegate.viewingLimitedAssetsTip}, '
-                    '${textDelegate.changeAccessibleLimitedAssets}',
+                label: '${semanticsTextDelegate.viewingLimitedAssetsTip}, '
+                    '${semanticsTextDelegate.changeAccessibleLimitedAssets}',
                 button: true,
                 onTap: PhotoManager.presentLimited,
                 hidden: !isPermissionLimited,
@@ -1686,6 +1705,9 @@ class DefaultAssetPickerBuilderDelegate
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       maxScaleFactor: 1.2,
+                      semanticsLabel: isPermissionLimited && p.isAll
+                          ? semanticsTextDelegate.accessiblePathName
+                          : p.name,
                     ),
                   ),
                 w!,
@@ -1751,8 +1773,11 @@ class DefaultAssetPickerBuilderDelegate
       return ColoredBox(color: theme.colorScheme.primary.withOpacity(0.12));
     }
 
-    final String semanticsName = isPermissionLimited && pathEntity.isAll
+    final String name = isPermissionLimited && pathEntity.isAll
         ? textDelegate.accessiblePathName
+        : pathEntity.name;
+    final String semanticsName = isPermissionLimited && pathEntity.isAll
+        ? semanticsTextDelegate.accessiblePathName
         : pathEntity.name;
     final String semanticsCount = '${pathEntity.assetCount}';
     return Selector<DefaultAssetPickerProvider, AssetPathEntity?>(
@@ -1761,10 +1786,10 @@ class DefaultAssetPickerBuilderDelegate
         final bool isSelected = currentPathEntity == pathEntity;
         return Semantics(
           label: '$semanticsName, '
-              '${textDelegate.sUnitAssetCountLabel}: '
+              '${semanticsTextDelegate.sUnitAssetCountLabel}: '
               '$semanticsCount',
           selected: isSelected,
-          onTapHint: textDelegate.sActionSwitchPathLabel,
+          onTapHint: semanticsTextDelegate.sActionSwitchPathLabel,
           button: false,
           child: Material(
             type: MaterialType.transparency,
@@ -1800,7 +1825,7 @@ class DefaultAssetPickerBuilderDelegate
                                     end: 10,
                                   ),
                                   child: ScaleText(
-                                    semanticsName,
+                                    name,
                                     style: const TextStyle(fontSize: 17),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -1873,7 +1898,7 @@ class DefaultAssetPickerBuilderDelegate
             enabled: p.isSelectedNotEmpty,
             focusable: !isSwitchingPath,
             hidden: isSwitchingPath,
-            onTapHint: textDelegate.sActionPreviewHint,
+            onTapHint: semanticsTextDelegate.sActionPreviewHint,
             child: child,
           ),
         );
@@ -1896,6 +1921,8 @@ class DefaultAssetPickerBuilderDelegate
                   fontSize: 17,
                 ),
                 maxScaleFactor: 1.2,
+                semanticsLabel: '${semanticsTextDelegate.preview}'
+                    '${p.isSelectedNotEmpty ? ' (${p.selectedAssets.length})' : ''}',
               ),
             ),
           ),
@@ -2057,6 +2084,10 @@ class DefaultAssetPickerBuilderDelegate
                   ),
                   maxLines: 1,
                   maxScaleFactor: 1.2,
+                  semanticsLabel:
+                      semanticsTextDelegate.durationIndicatorBuilder(
+                    Duration(seconds: asset.duration),
+                  ),
                 ),
               ),
             ),
